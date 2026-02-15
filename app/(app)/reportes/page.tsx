@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AttendanceBarChart, AttendancePieChart, AttendanceLineChart } from '@/components/attendance-chart'
+import { AttendanceBarChart, AttendancePieChart, AttendanceLineChart, AttendanceByGenderChart, AttendanceByDayOfWeekChart } from '@/components/attendance-chart'
 import { AttendanceTable } from '@/components/attendance-table'
 import { getCourses, getRecordsByCourse } from '@/lib/storage'
 import type { Course, AttendanceRecord } from '@/lib/types'
@@ -207,6 +207,15 @@ export default function ReportesPage() {
           </div>
 
           <AttendanceBarChart course={course} records={records} />
+
+          {/* Advanced Analytics */}
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Análisis Avanzado</h2>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <AttendanceByGenderChart course={course} records={records} />
+              <AttendanceByDayOfWeekChart records={records} />
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
