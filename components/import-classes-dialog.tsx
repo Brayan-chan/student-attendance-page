@@ -102,6 +102,8 @@ export function ImportClassesDialog({
               name: s.profile?.name?.fullName || 'Sin nombre',
               email: s.profile?.emailAddress || '',
               photoUrl: s.profile?.photoUrl || '',
+              qrCode: crypto.randomUUID(), // Generar QR automáticamente
+              accumulatedTardies: 0,
             }))
           }
         } catch {

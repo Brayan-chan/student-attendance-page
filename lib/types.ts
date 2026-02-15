@@ -7,6 +7,7 @@ export interface Course {
   students: Student[]
   schedules: Schedule[]
   importedAt: string
+  lastSyncedAt?: string // Última vez que se sincronizó con Classroom
 }
 
 export interface Student {
@@ -15,6 +16,9 @@ export interface Student {
   name: string
   email?: string
   photoUrl?: string
+  qrCode?: string // Código QR único para el estudiante
+  gender?: 'masculino' | 'femenino' | 'otro' // Para estadísticas
+  accumulatedTardies?: number // Contador de retardos acumulados
 }
 
 export interface Schedule {
@@ -32,7 +36,23 @@ export interface StudentAttendance {
   studentId: string
   status: AttendanceStatus
   note?: string
+  scannedAt?: string // Timestamp de cuando escaneó el QR (ISO string)
+  manualOverride?: boolean // true si fue marcado manualmente después del escaneo
 }
+
+// Sesión activa de asistencia para escaneo de QR
+export interface AttendanceSession {
+  id: string
+  courseId: string
+  scheduleId?: string
+  date: string // "2026-02-14"
+  startedAt: string // ISO timestamp de cuando se abrió la sesión
+  endedAt?: string // ISO timestamp de cuando se cerró la sesión
+  isActive: boolean
+  scannedStudents: string[] // IDs de estudiantes que ya escanearon
+  tardyThresholdMinutes?: number // Minutos después del inicio para considerar retardo (default 10)
+}
+
 
 export interface AttendanceRecord {
   id: string
@@ -78,4 +98,22 @@ export const STATUS_CONFIG: Record<AttendanceStatus, { label: string; color: str
     bgColor: 'bg-sky-50',
     borderColor: 'border-sky-200',
   },
+}
+
+// Configuración del sistema
+export interface TeacherProfile {
+  name: string
+  email: string
+  phone?: string
+  department?: string
+  institution?: string
+  photoUrl?: string
+}
+
+export interface SystemSettings {
+  tardyThresholdMinutes: number // Minutos de tolerancia para retardos (default: 10)
+  defaultSessionDurationMinutes: number // Duración por defecto de una sesión de QR (default: 15)
+  teacherProfile?: TeacherProfile
+  version: string
+  lastUpdated: string
 }

@@ -234,3 +234,218 @@ export function AttendanceLineChart({
     </Card>
   )
 }
+
+// Gráfica de análisis por género (con proporción estadística)
+export function AttendanceByGenderChart({
+  course,
+  records,
+}: {
+  course: Course
+  records: AttendanceRecord[]
+}) {
+  // Contar estudiantes por género
+  const genderCounts = {
+    masculino: course.students.filter(s => s.gender === 'masculino').length,
+    femenino: course.students.filter(s => s.gender === 'femenino').length,
+    otro: course.students.filter(s => s.gender === 'otro').length,
+    sinDefinir: course.students.filter(s => !s.gender).length,
+  }
+
+  const total = course.students.length
+
+  // Calcular ausencias por género
+  const absencesByGender = {
+    masculino: 0,
+    femenino: 0,
+    otro: 0,
+    sinDefinir: 0,
+  }
+
+  records.forEach((record) => {
+    record.records.forEach((attendance) => {
+      if (attendance.status === 'ausente') {
+        const student = course.students.find(s => s.id === attendance.studentId)
+        if (student) {
+          if (student.gender === 'masculino') absencesByGender.masculino++
+          else if (student.gender === 'femenino') absencesByGender.femenino++
+          else if (student.gender === 'otro') absencesByGender.otro++
+          else absencesByGender.sinDefinir++
+        }
+      }
+    })
+  })
+
+  // Calcular proporción estadística (ausencias / total de estudiantes de ese género / total de registros)
+  const totalRecords = records.length
+  const data = [
+    {
+      genero: 'Masculino',
+      proporcion: genderCounts.masculino > 0 
+        ? ((absencesByGender.masculino / genderCounts.masculino / totalRecords) * 100).toFixed(1)
+        : 0,
+      ausencias: absencesByGender.masculino,
+      estudiantes: genderCounts.masculino,
+    },
+    {
+      genero: 'Femenino',
+      proporcion: genderCounts.femenino > 0 
+        ? ((absencesByGender.femenino / genderCounts.femenino / totalRecords) * 100).toFixed(1)
+        : 0,
+      ausencias: absencesByGender.femenino,
+      estudiantes: genderCounts.femenino,
+    },
+    {
+      genero: 'Otro',
+      proporcion: genderCounts.otro > 0 
+        ? ((absencesByGender.otro / genderCounts.otro / totalRecords) * 100).toFixed(1)
+        : 0,
+      ausencias: absencesByGender.otro,
+      estudiantes: genderCounts.otro,
+    },
+    {
+      genero: 'Sin definir',
+      proporcion: genderCounts.sinDefinir > 0 
+        ? ((absencesByGender.sinDefinir / genderCounts.sinDefinir / totalRecords) * 100).toFixed(1)
+        : 0,
+      ausencias: absencesByGender.sinDefinir,
+      estudiantes: genderCounts.sinDefinir,
+    },
+  ].filter(d => d.estudiantes > 0)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Análisis de ausencias por género</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Proporción estadística de ausencias considerando el total de estudiantes por género
+        </p>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            No hay datos de género disponibles
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data} margin={{ left: 0, right: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="genero" tick={{ fontSize: 12 }} />
+              <YAxis label={{ value: '% Ausencias', angle: -90, position: 'insideLeft' }} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: 'hsl(var(--card))',
+                }}
+                content={({ payload }) => {
+                  if (!payload?.[0]) return null
+                  const data = payload[0].payload
+                  return (
+                    <div className="rounded-lg border bg-card p-3 shadow-sm">
+                      <p className="font-semibold">{data.genero}</p>
+                      <p className="text-sm">Proporción: {data.proporcion}%</p>
+                      <p className="text-xs text-muted-foreground">
+                        {data.ausencias} ausencias / {data.estudiantes} estudiantes
+                      </p>
+                    </div>
+                  )
+                }}
+              />
+              <Bar dataKey="proporcion" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// Gráfica de análisis por día de la semana
+export function AttendanceByDayOfWeekChart({
+  records,
+}: {
+  records: AttendanceRecord[]
+}) {
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+  
+  // Contar ausencias por día de la semana
+  const absencesByDay: { [key: number]: number } = {}
+  const recordsByDay: { [key: number]: number } = {}
+
+  records.forEach((record) => {
+    const date = new Date(record.date + 'T12:00:00')
+    const dayOfWeek = date.getDay() // 0 = domingo, 1 = lunes, etc.
+    
+    recordsByDay[dayOfWeek] = (recordsByDay[dayOfWeek] || 0) + 1
+    
+    const absences = record.records.filter(r => r.status === 'ausente').length
+    absencesByDay[dayOfWeek] = (absencesByDay[dayOfWeek] || 0) + absences
+  })
+
+  // Crear datos para la gráfica
+  const data = Object.keys(recordsByDay)
+    .map(day => {
+      const dayNum = parseInt(day)
+      const totalAbsences = absencesByDay[dayNum] || 0
+      const totalRecords = recordsByDay[dayNum] || 0
+      const avgAbsences = totalRecords > 0 ? (totalAbsences / totalRecords).toFixed(1) : 0
+
+      return {
+        dia: dayNames[dayNum],
+        promedio: parseFloat(avgAbsences as string),
+        total: totalAbsences,
+        registros: totalRecords,
+      }
+    })
+    .sort((a, b) => {
+      const order = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+      return order.indexOf(a.dia) - order.indexOf(b.dia)
+    })
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Ausencias por día de la semana</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Promedio de ausencias por día de la semana
+        </p>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            Sin datos disponibles
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data} margin={{ left: 0, right: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+              <YAxis label={{ value: 'Promedio', angle: -90, position: 'insideLeft' }} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: 'hsl(var(--card))',
+                }}
+                content={({ payload }) => {
+                  if (!payload?.[0]) return null
+                  const data = payload[0].payload
+                  return (
+                    <div className="rounded-lg border bg-card p-3 shadow-sm">
+                      <p className="font-semibold">{data.dia}</p>
+                      <p className="text-sm">Promedio: {data.promedio} ausencias</p>
+                      <p className="text-xs text-muted-foreground">
+                        {data.total} ausencias en {data.registros} registros
+                      </p>
+                    </div>
+                  )
+                }}
+              />
+              <Bar dataKey="promedio" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

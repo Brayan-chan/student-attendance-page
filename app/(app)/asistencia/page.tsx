@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ClipboardCheck, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClipboardCheck, ArrowRight, QrCode, List } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ export default function AsistenciaPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const router = useRouter()
 
   useEffect(() => {
     setCourses(getCourses())
@@ -31,6 +33,12 @@ export default function AsistenciaPage() {
   const existingRecord = selectedCourse
     ? getRecordByCourseAndDate(selectedCourse, date)
     : null
+
+  const handleQrMode = () => {
+    if (selectedCourse) {
+      router.push(`/asistencia/${selectedCourse}/qr?date=${date}`)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,22 +97,38 @@ export default function AsistenciaPage() {
             </div>
           )}
 
-          <Button
-            asChild
-            disabled={!selectedCourse || !date}
-            className="gap-2"
-          >
-            <Link
-              href={
-                selectedCourse
-                  ? `/asistencia/${selectedCourse}?date=${date}`
-                  : '#'
-              }
+          <div className="space-y-3">
+            <div className="text-sm font-medium">Modo de registro:</div>
+            
+            <Button
+              onClick={handleQrMode}
+              disabled={!selectedCourse || !date}
+              className="w-full gap-2"
+              size="lg"
             >
-              {existingRecord ? 'Editar lista' : 'Pasar lista'}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+              <QrCode className="h-5 w-5" />
+              Escaneo de Códigos QR
+            </Button>
+
+            <Button
+              asChild
+              disabled={!selectedCourse || !date}
+              className="w-full gap-2"
+              variant="outline"
+              size="lg"
+            >
+              <Link
+                href={
+                  selectedCourse
+                    ? `/asistencia/${selectedCourse}?date=${date}`
+                    : '#'
+                }
+              >
+                <List className="h-5 w-5" />
+                {existingRecord ? 'Editar lista manual' : 'Lista manual'}
+              </Link>
+            </Button>
+          </div>
 
           {courses.length === 0 && (
             <p className="text-center text-sm text-muted-foreground">

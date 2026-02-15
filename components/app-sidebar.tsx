@@ -10,6 +10,7 @@ import {
   BarChart3,
   LogOut,
   GraduationCap,
+  Settings,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const navItems = [
   { title: 'Clases', href: '/clases', icon: BookOpen },
   { title: 'Pasar Lista', href: '/asistencia', icon: ClipboardCheck },
   { title: 'Reportes', href: '/reportes', icon: BarChart3 },
+  { title: 'Configuración', href: '/configuracion', icon: Settings },
 ]
 
 export function AppSidebar() {

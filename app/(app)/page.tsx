@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { AttendanceMethodDialog } from '@/components/attendance-method-dialog'
 import { getCourses, getAttendanceRecords } from '@/lib/storage'
 import { DAY_NAMES } from '@/lib/types'
 import type { Course, AttendanceRecord, Schedule } from '@/lib/types'
@@ -27,6 +28,8 @@ function getJSDayIndex(): number {
 export default function DashboardPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<{ id: string; name: string } | null>(null)
+  const [showMethodDialog, setShowMethodDialog] = useState(false)
 
   useEffect(() => {
     setCourses(getCourses())
@@ -156,10 +159,15 @@ export default function DashboardPage() {
                         Lista tomada
                       </Badge>
                     ) : (
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/asistencia/${course.id}?date=${todayStr}`}>
-                          Pasar lista
-                        </Link>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedCourse({ id: course.id, name: course.name })
+                          setShowMethodDialog(true)
+                        }}
+                      >
+                        Pasar lista
                       </Button>
                     )}
                   </div>
@@ -223,6 +231,17 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Attendance Method Selection Dialog */}
+      {selectedCourse && (
+        <AttendanceMethodDialog
+          open={showMethodDialog}
+          onOpenChange={setShowMethodDialog}
+          courseId={selectedCourse.id}
+          courseName={selectedCourse.name}
+          date={todayStr}
+        />
+      )}
     </div>
   )
 }

@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Download, Users, Calendar, Trash2, BookOpen } from 'lucide-react'
+import { Download, Users, Calendar, Trash2, BookOpen, Plus, FileUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +24,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { ImportClassesDialog } from '@/components/import-classes-dialog'
+import { CreateClassDialog } from '@/components/create-class-dialog'
 import { getCourses, deleteCourse } from '@/lib/storage'
 import type { Course } from '@/lib/types'
 
 export default function ClasesPage() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   const loadCourses = () => {
     setCourses(getCourses())
@@ -43,15 +52,32 @@ export default function ClasesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mis Clases</h1>
           <p className="text-muted-foreground">
-            Administra tus clases e importa desde Google Classroom.
+            Administra tus clases e importa desde Google Classroom o crea clases manualmente.
           </p>
         </div>
-        <ImportClassesDialog onImportComplete={loadCourses}>
-          <Button className="gap-2">
-            <Download className="h-4 w-4" />
-            Importar desde Classroom
-          </Button>
-        </ImportClassesDialog>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar Clase
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <ImportClassesDialog onImportComplete={loadCourses}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Download className="mr-2 h-4 w-4" />
+                Importar desde Google Classroom
+              </DropdownMenuItem>
+            </ImportClassesDialog>
+            <CreateClassDialog onComplete={loadCourses}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <FileUp className="mr-2 h-4 w-4" />
+                Crear clase manual (con CSV)
+              </DropdownMenuItem>
+            </CreateClassDialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {courses.length === 0 ? (
@@ -63,15 +89,23 @@ export default function ClasesPage() {
             <div className="text-center">
               <p className="text-lg font-medium">No tienes clases aun</p>
               <p className="text-sm text-muted-foreground">
-                Importa tus clases desde Google Classroom para comenzar.
+                Importa desde Google Classroom o crea una clase manual.
               </p>
             </div>
-            <ImportClassesDialog onImportComplete={loadCourses}>
-              <Button className="gap-2">
-                <Download className="h-4 w-4" />
-                Importar clases
-              </Button>
-            </ImportClassesDialog>
+            <div className="flex gap-3">
+              <ImportClassesDialog onImportComplete={loadCourses}>
+                <Button className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Importar desde Classroom
+                </Button>
+              </ImportClassesDialog>
+              <CreateClassDialog onComplete={loadCourses}>
+                <Button variant="outline" className="gap-2">
+                  <FileUp className="h-4 w-4" />
+                  Crear clase manual
+                </Button>
+              </CreateClassDialog>
+            </div>
           </CardContent>
         </Card>
       ) : (
